@@ -1,8 +1,78 @@
 import inspect
 import json
-from typing import Callable, TypedDict
+import os
+from typing import Callable, TypedDict, Dict, Any
 
 from openai import OpenAI
+
+
+def tool(func: Callable) -> Callable:
+    file_path = inspect.getfile(func)
+    json_file_path = file_path.replace('.py', '.tool.json')
+
+    # Load existing data from .tool.json
+    if os.path.exists(json_file_path):
+        with open(json_file_path, 'r') as file:
+            existing_data = json.load(file)
+    else:
+        existing_data = {}
+
+    # If the function's definition does not exist, extract metadata, generate schema, and update the file
+    if func.__name__ not in existing_data:
+        # Extract metadata using OpenAI API
+        function_metadata = extract_metadata_with_openai_api(func)
+
+        # Generate JSON schema from the metadata
+        json_schema = generate_json_schema(function_metadata)
+
+        # Update the .tool.json file with the new schema
+        existing_data[func.__name__] = json_schema
+        with open(json_file_path, 'w') as file:
+            json.dump(existing_data, file, indent=4)
+    else:
+        # Use existing schema from the .tool.json file
+        json_schema = existing_data[func.__name__]
+
+    # Set definition to func.openai_schema
+    func.openai_schema = json_schema
+
+    return func
+
+
+def extract_metadata_with_openai_api(func: Callable) -> Dict[str, Any]:
+    source = inspect.getsource(func)
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4-1106-preview",
+        messages=[
+            {
+                "role": "system",
+                "content": f"Extract function metadata from the following function definition:\n```\n{source}\n```\n"
+            }
+        ]
+    )
+    metadata = response.choices[0].message.content
+    return json.loads(metadata)  # Assuming the response is in JSON format
+
+
+def generate_json_schema(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "type": "function",
+        "function": {
+            "name": metadata["function_name"],
+            "description": metadata["function_description"],
+            "parameters": {
+                "type": "object",
+                "properties": {param["name"]: {
+                    "type": param["type"],
+                    "description": param["description"]
+                } for param in metadata["parameters"]
+                },
+                "required": metadata["required_parameters"]
+            },
+        }
+    }
+
 
 function_schema = """
 {
@@ -95,6 +165,8 @@ schema = """
   }
 }
 """
+
+
 class FunctionDefinition(TypedDict):
     function_name: str
     function_description: str
@@ -104,7 +176,6 @@ class FunctionDefinition(TypedDict):
 def is_valid_function_definition(data: dict) -> bool:
     required_keys = ['function_name', 'function_description', 'argument_description']
     return all(key in data and isinstance(data[key], str) for key in required_keys)
-
 
 
 def create_definition(func: Callable, goal: str) -> FunctionDefinition:
