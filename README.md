@@ -1,7 +1,11 @@
 # LLM FOO
 
 ## Overview
-LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models. "Embrace the LLM FOO spirit in coding: Let your logic flow like water, your revisions swirl like wind, and your solutions strike with the force of a dragon."
+LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models... or 
+actually this is about automatically making the OpenAI tool JSON Schema, parsing call and constructing the
+result to the chat model.
+
+But hey I hope this will become a set of small useful LLM helper functions that will make building stuff easier.
 
 ![](/llmfoo.webp)
 
@@ -13,11 +17,17 @@ pip install llmfoo
 ## Usage
 Here's a quick example of how to use LLM FOO:
 ```python
-import llmfoo
+from llmfoo import tool
 
 # Example usage
-result = llmfoo.perform_magic('Your input here')
-print(result)
+@tool
+def adder(x: int, y: int) -> int:
+    return x + y
+
+..
+Function call from messages
+adder.handle(message) -> result message or None
+
 ```
 
 ## Features
