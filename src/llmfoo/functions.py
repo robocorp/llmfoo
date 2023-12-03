@@ -4,7 +4,97 @@ from typing import Callable, TypedDict
 
 from openai import OpenAI
 
+function_schema = """
+{
+  "type": "function",
+  "function": {
+    "name": "<function_name>",
+    "description": "<function_description>",
+    "parameters": {
+      "$ref": "#/definitions/parametersSchema"
+    }
+  },
+  "definitions": {
+    "parametersSchema": {
+      // Parameter schema definition goes here
+    }
+  }
+}
+"""
 
+parameter_schema = """
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["string", "number", "integer", "boolean", "object", "array", "null"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "enum": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  },
+  "required": ["type", "description"],
+  "dependencies": {
+    "type": {
+      "oneOf": [
+        {
+          "properties": {
+            "type": {
+              "const": "string"
+            }
+          }
+        },
+        {
+          "properties": {
+            "type": {
+              "not": {
+                "const": "string"
+              }
+            },
+            "enum": {
+              "not": {}
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+"""
+
+schema = """
+{
+  "type": "function",
+  "function": {
+    "name": "<function_name>",
+    "description": "<function_description>",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "<parameter1_name>": {
+          "type": "<parameter1_type>",
+          "description": "<parameter1_description>"
+        },
+        "<parameter2_name>": {
+          "type": "<parameter2_type>",
+          "description": "<parameter2_description>"
+        }
+        // Add more parameters as needed
+      },
+      "required": ["<required_parameter1_name>", "<required_parameter2_name>"]
+      // List all required parameters
+    }
+  }
+}
+"""
 class FunctionDefinition(TypedDict):
     function_name: str
     function_description: str
