@@ -3,6 +3,8 @@
 ## Overview
 LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models. "Embrace the LLM FOO spirit in coding: Let your logic flow like water, your revisions swirl like wind, and your solutions strike with the force of a dragon."
 
+![LLM FOO - Kung Foo](llmfoo.webp)
+
 ## Installation
 ```bash
 pip install llmfoo
