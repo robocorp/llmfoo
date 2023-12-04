@@ -113,7 +113,8 @@ def test_assistant_with_multiplier():
 ```
 
 ## Contributing
-Interested in contributing? We'd love your help to make this project even better. Check out our contributing guidelines.
+Interested in contributing? Loved to get your help to make this project better!
+The APIs under are changing and system is still very much first version.
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
