@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "llmfoo"
-version = "0.1.0"
-description = ""
+version = "0.2.0"
+description = "Automatically make the OpenAI tool JSON Schema, parsing call and constructing the result to the chat model."
 authors = ["Mikko Korpela <mikko@robocorp.com>"]
 readme = "README.md"
 packages = [{include = "llmfoo", from = "src"}]
