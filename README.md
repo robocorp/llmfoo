@@ -19,9 +19,9 @@ pip install llmfoo
 Here's a quick example of how to use LLM FOO:
 
 1. Add `@tool` annotation.
-2. llmfoo will generate the json schema to YOURFILE.tool.json with GPT-4-Turbo
+2. llmfoo will generate the json schema to YOURFILE.tool.json with GPT-4-Turbo - "Never send a machine to do a human's job" .. like who wants to write boilerplate docs for Machines???
 3. Annotated functions have helpers:
-   - `openai_schema` to return the schema
+   - `openai_schema` to return the schema (You can edit it from the json if your not happy with what the machines did)
    - `openai_tool_call` to make the tool call and return the result in chat API message format
    - `openai_tool_output` to make the tool call and return the result in assistant API tool output format
 
