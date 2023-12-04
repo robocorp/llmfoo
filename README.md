@@ -5,7 +5,8 @@ LLM FOO is a cutting-edge project blending the art of Kung Fu with the science o
 actually this is about automatically making the OpenAI tool JSON Schema, parsing call and constructing the
 result to the chat model.
 
-But hey I hope this will become a set of small useful LLM helper functions that will make building stuff easier.
+But hey I hope this will become a set of small useful LLM helper functions that will make building stuff easier
+because current bleeding edge APIs are a bit of a mess and I think we can do better.
 
 ![](/llmfoo.webp)
 
@@ -16,6 +17,14 @@ pip install llmfoo
 
 ## Usage
 Here's a quick example of how to use LLM FOO:
+
+1. Add `@tool` annotation.
+2. llmfoo will generate the json schema to YOURFILE.tool.json with GPT-4-Turbo
+3. Annotated functions have helpers:
+   - `openai_schema` to return the schema
+   - `openai_tool_call` to make the tool call and return the result in chat API message format
+   - `openai_tool_output` to make the tool call and return the result in assistant API tool output format
+
 ```python
 from time import sleep
 
@@ -103,20 +112,12 @@ def test_assistant_with_multiplier():
 
 ```
 
-## Features
-- Feature 1: Description
-- Feature 2: Description
-- Feature 3: Description
-
 ## Contributing
 Interested in contributing? We'd love your help to make this project even better. Check out our contributing guidelines.
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
 
-## Contact
-For any questions or feedback, please contact us at contact@example.com.
-
 ## Acknowledgements
 - Thanks to all the contributors and maintainers.
-- Special thanks to the Kung Fu masters who inspired this project.
+- Special thanks to the Kung Fu masters such as Bruce Lee who inspired this project.
