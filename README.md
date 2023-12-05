@@ -1,5 +1,8 @@
 # LLM FOO
 
+[![Version](https://img.shields.io/pypi/v/llmfoo.svg)](https://pypi.python.org/pypi/llmfoo)
+[![Downloads](http://pepy.tech/badge/llmfoo)](http://pepy.tech/project/llmfoo)
+
 ## Overview
 LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models... or 
 actually this is about automatically making the OpenAI tool JSON Schema, parsing call and constructing the
