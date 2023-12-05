@@ -5,6 +5,7 @@ from typing import Callable, Dict, Any
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageToolCall
+from openai.types.chat.chat_completion_message_tool_call import Function
 
 
 def tool(func: Callable) -> Callable:
@@ -42,13 +43,18 @@ def tool(func: Callable) -> Callable:
     return func
 
 
+def call_function(func: Callable, openai_func: Function) -> str:
+    kwargs = json.loads(openai_func.arguments)
+    result = func(**kwargs)
+    return str(result)
+
+
 def create_tool_output_handler(func: Callable, json_schema):
     def handler(msg: ChatCompletionMessageToolCall):
         if func.__name__ == msg.function.name:
-            result = func(*json.loads(msg.function.arguments).values())
             return {
                 "tool_call_id": msg.id,
-                "output": str(result)
+                "output": call_function(func, msg.function)
             }
         return None
 
@@ -58,12 +64,11 @@ def create_tool_output_handler(func: Callable, json_schema):
 def create_tool_call_handler(func: Callable, json_schema):
     def handler(msg: ChatCompletionMessageToolCall):
         if func.__name__ == msg.function.name:
-            result = func(*json.loads(msg.function.arguments).values())
             return {
                 "role": "tool",
                 "tool_call_id": msg.id,
                 "name": msg.function.name,
-                "content": str(result)
+                "content": call_function(func, msg.function)
             }
         return None
 
@@ -78,6 +83,9 @@ Extract function metadata from the following function definition:
 ```python
 {source}
 ```
+Focus on what the function can be used for in the description.
+Explain the parameters from user point of view in their descriptions.
+Tool decorator explanation can be omitted.
 
 Use the following Pydantic style JSON schema in your response:
 ```json
@@ -133,11 +141,11 @@ schema = """
       "type": "object",
       "properties": {
         "<parameter1_name>": {
-          "type": "<parameter1_type>",
+          "type": "<parameter1_type (string | integer | number | boolean | array)>",
           "description": "<parameter1_description>"
         },
         "<parameter2_name>": {
-          "type": "<parameter2_type>",
+          "type": "<parameter2_type (string | integer | number | boolean | array)>",
           "description": "<parameter2_description>"
         }
         // Add more parameters as needed

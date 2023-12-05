@@ -15,6 +15,12 @@ def multiplier(x: int, y: int) -> int:
     return x * y
 
 
+@tool
+def complicated(foo: str, bar: str = "Steve") -> str:
+    """ Funny joke function with no real use """
+    return f"FOO BAR? {foo} {bar}"
+
+
 client = OpenAI()
 
 

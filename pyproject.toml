@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmfoo"
-version = "0.2.0"
+version = "0.3.0"
 description = "Automatically make the OpenAI tool JSON Schema, parsing call and constructing the result to the chat model."
 authors = ["Mikko Korpela <mikko@robocorp.com>"]
 readme = "README.md"
