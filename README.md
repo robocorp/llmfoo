@@ -7,7 +7,8 @@
 LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models... or 
 actually this is about automatically making the OpenAI tool JSON Schema, parsing call and constructing the
 result to the chat model.
-And then there is a second utility `is_statement_true` that uses [genius logit_bias trick](https://twitter.com/AAAzzam/status/1669753721574633473).
+And then there is a second utility `is_statement_true` that uses [genius logit_bias trick](https://twitter.com/AAAzzam/status/1669753721574633473)
+that only uses one output token.
 
 But hey I hope this will become a set of small useful LLM helper functions that will make building stuff easier
 because current bleeding edge APIs are a bit of a mess and I think we can do better.
