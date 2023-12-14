@@ -19,7 +19,8 @@ Based on the following criteria: "{criteria}" is the statement true?
             "1904": 100,  # true
             "3934": 100  # false
         },
-        max_tokens=1
+        max_tokens=1,
+        temperature=0
     )
     print(repr(response))
     result = response.choices[0].message.content

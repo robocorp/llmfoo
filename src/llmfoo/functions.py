@@ -101,7 +101,8 @@ Use the following Pydantic style JSON schema in your response:
                 "role": "system",
                 "content": instructions
             }
-        ]
+        ],
+        temperature=0
     )
     print(repr(response))
     metadata = response.choices[0].message.content
