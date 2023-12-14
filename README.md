@@ -7,6 +7,7 @@
 LLM FOO is a cutting-edge project blending the art of Kung Fu with the science of Large Language Models... or 
 actually this is about automatically making the OpenAI tool JSON Schema, parsing call and constructing the
 result to the chat model.
+And then there is a second utility `is_statement_true` that uses [genius logit_bias trick](https://twitter.com/AAAzzam/status/1669753721574633473).
 
 But hey I hope this will become a set of small useful LLM helper functions that will make building stuff easier
 because current bleeding edge APIs are a bit of a mess and I think we can do better.
@@ -34,6 +35,25 @@ from time import sleep
 from openai import OpenAI
 
 from llmfoo.functions import tool
+from llmfoo import is_statement_true
+
+
+def test_is_statement_true_with_default_criteria():
+    assert is_statement_true("Earth is a planet.")
+    assert not is_statement_true("1 + 2 = 5")
+
+
+def test_is_statement_true_with_own_criteria():
+    assert not is_statement_true("Temperature outside is -2 degrees celsius",
+                                 criteria="Temperature above 0 degrees celsius")
+    assert is_statement_true("1984 was written by George Orwell",
+                             criteria="George Orwell is the author of 1984")
+
+
+def test_is_statement_true_criteria_can_change_truth_value():
+    assert is_statement_true("Earth is 3rd planet from the Sun")
+    assert not is_statement_true("Earth is 3rd planet from the Sun",
+                                 criteria="Earth is stated to be 5th planet from the Sun")
 
 
 @tool
