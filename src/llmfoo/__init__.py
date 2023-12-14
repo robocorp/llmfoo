@@ -22,6 +22,5 @@ Based on the following criteria: "{criteria}" is the statement true?
         max_tokens=1,
         temperature=0
     )
-    print(repr(response))
     result = response.choices[0].message.content
     return result == "true"
