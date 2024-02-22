@@ -58,8 +58,8 @@ def get_page_description_from_openai(base64_image: str, page_content: str, table
     instruction = f"""
 Convert the text content of this PDF document page into well-structured Markdown format.
 Below is the PyPDF extracted text and potential Camelot extracted tables from the page, followed by screenshot
-of the same page. For each figure in the screenshot of the page, provide a clear and detailed description in the text,
-as the reader will not have access to the actual figure.
+of the same page. Insert detailed, vivid descriptions for each figure directly where mentioned.
+Ensure descriptions are comprehensive, allowing readers to visualize and understand without seeing the figure.
 Apply Markdown formatting appropriately, using headers, lists, tables, bold and italic emphasis, and links.
 At the beginning, add an HTML comment in Markdown to discuss how to best represent the visual elements from
 the image of the page, such as tables and figures. Specifically, note details like the number of columns and
@@ -67,15 +67,35 @@ rows in a table and information defined in figures. Number of columns are calcul
 Here is an example of how the result should look in Markdown format:
 
 ```markdown"
-<!-- Page contains a table. The table has three columns, 1 header row and 2 data rows. -->
-# Section Title
-* List Item 1
-* List Item 2
-Table:
-| Header 1 | Header 2 | Header 3 |
-|----------|----------|----------|
-| Row 1    | Data     | Data     |
-| Row 2    | Data     | Data     |
+<!--
+- The page includes a table with three columns, 1 header row, and 2 data rows. The table presents quarterly sales data for two products.
+- There is a bar graph on the page depicting annual revenue from 2015 to 2020, indicating a trend of steady growth.
+-->
+
+# Quarterly Sales Report
+
+- Introduction to sales trends
+- Analysis of product performance
+
+**Summary:**
+
+This quarter showed a significant uptick in sales for both Product A and Product B, reflecting our strategic marketing efforts and expanded distribution channels. The following table breaks down the sales figures:
+
+**Table: Quarterly Sales Data**
+
+| Quarter  | Product A Sales (Units) | Product B Sales (Units) |
+|----------|-------------------------|-------------------------|
+| Q1 2021  | 1,500                   | 1,200                   |
+| Q2 2021  | 1,800                   | 1,400                   |
+
+**Figure 1: Annual Revenue Trend (2015-2020)**
+
+A bar graph illustrates a consistent rise in annual revenue from 2015 to 2020. The graph details:
+- The x-axis labels each year from 2015 through 2020.
+- The y-axis shows revenue in millions, starting at $10 million in 2015 and reaching $25 million by 2020.
+- Each bar represents the total revenue for the year, with a noticeable increase year-over-year, highlighting the company's growth and the successful introduction of new products in 2018.
+
+The steady growth trajectory underscores the effectiveness of our long-term business strategies and the increasing market demand for our products.
 ```
 
 Here is the text extracted from the page with PyPDF and then the screenshot of the same page:
@@ -106,6 +126,7 @@ Here are the markdown formatted tables from the page extracted with Camelot:
         ],
         model="gpt-4-vision-preview",
         max_tokens=4096,
+        temperature=1.0,
     )
     content = chat_completion.choices[0].message.content
     if not content:
