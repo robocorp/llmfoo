@@ -7,12 +7,10 @@ from pathlib import Path
 from typing import List, TypedDict
 import base64
 import requests
-import sqlite3
 
 from camelot.core import TableList
 from dotenv import load_dotenv
 import argparse
-from contextlib import contextmanager
 import camelot
 from pypdf import PageObject
 
@@ -27,29 +25,6 @@ class PageData(TypedDict):
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-
-@contextmanager
-def get_database_connection():
-    conn = sqlite3.connect("manuals3.db")
-    try:
-        yield conn
-    finally:
-        conn.close()
-
-
-def setup_database():
-    with get_database_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS page_descriptions (
-                page_image_base64 TEXT PRIMARY KEY,
-                description TEXT
-            )
-            """
-        )
-        conn.commit()
 
 
 def clean_workdir(workdir: Path):
@@ -76,28 +51,7 @@ def encode_image(image_path: str):
         return ""
 
 
-def get_page_description(base64_image: str, page_content: str, tables_markdown: str, page_num: int) -> str:
-    with get_database_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT description FROM page_descriptions WHERE page_image_base64 = ?", (base64_image,))
-        result = cursor.fetchone()
-
-        if result:
-            logging.info("Found existing description in database.")
-            return result[0]
-
-        content = get_page_description_from_openai(base64_image, tables_markdown, page_content)
-
-        cursor.execute(
-            "INSERT OR REPLACE INTO page_descriptions (page_image_base64, description) VALUES (?, ?)",
-            (base64_image, content)
-        )
-        conn.commit()
-
-        return content
-
-
-def get_page_description_from_openai(base64_image: str, tables_markdown: str, page_content: str) -> str:
+def get_page_description_from_openai(base64_image: str, page_content: str, tables_markdown: str) -> str:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("No OPENAI_API_KEY in environment variables!")
@@ -221,7 +175,7 @@ def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_pat
         f.write(tables_markdown)
 
     base64_image = encode_image(page_image_path)
-    page_description = get_page_description(base64_image, page_content, tables_markdown, page_num)
+    page_description = get_page_description_from_openai(base64_image, page_content, tables_markdown)
 
     with open(str(img_dir / f"page_description_{page_num}.txt"), "w") as f:
         f.write(page_description)
@@ -288,7 +242,6 @@ def main():
     output_file = args.output_file
     workdir = Path(args.workdir)
 
-    setup_database()
     logging.info(f"Processing PDF files in directory: {pdf_directory}")
     pdf_data = read_pdf_files(pdf_directory, workdir)
     logging.info(f"Processed {len(pdf_data)} pages from PDF files.")
