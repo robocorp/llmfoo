@@ -55,8 +55,6 @@ def get_page_description_from_openai(base64_image: str, page_content: str, table
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("No OPENAI_API_KEY in environment variables!")
-    print(page_content)
-    print("=" * 80)
     instruction = f"""
 Convert the text content of this PDF document page into well-structured Markdown format.
 Below is the PyPDF extracted text and potential Camelot extracted tables from the page, followed by screenshot
@@ -110,7 +108,6 @@ Here are the markdown formatted tables from the page extracted with Camelot:
         max_tokens=4096,
     )
     content = chat_completion.choices[0].message.content
-    print(content)
     if not content:
         raise Exception("Received empty content from OpenAI API.")
     logging.info(f"Received response from OpenAI API: {content[:120]}...")
