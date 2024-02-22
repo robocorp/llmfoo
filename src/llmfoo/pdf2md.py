@@ -1,10 +1,11 @@
-import json
+from __future__ import annotations
+
 import os
 import logging
 import subprocess
 import pypdf
 from pathlib import Path
-from typing import List, TypedDict, Callable
+from typing import TypedDict, Callable
 import base64
 
 from openai import OpenAI
@@ -93,15 +94,15 @@ Here are the markdown formatted tables from the page extracted with Camelot:
         messages=[
             {"role": "system", "content": "You are a helpful assistant in document page image to text processing."},
             {"role": "user", "content": [
-                    {
-                        "type": "text",
-                        "text": instruction,
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{base64_image}", "detail": "high"},
-                    },
-                ]}
+                {
+                    "type": "text",
+                    "text": instruction,
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{base64_image}", "detail": "high"},
+                },
+            ]}
         ],
         model="gpt-4-vision-preview",
         max_tokens=4096,
@@ -160,20 +161,22 @@ def _use_file_or_create(filename: str, creator: Callable) -> str:
     return content
 
 
-def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_path: Path, img_dir: Path) -> PageData:
-    page_image_path = convert_pdf_page_to_png(pdf_path, page_num, img_dir)
+def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_path: Path, pages_dir: Path) -> PageData:
+    page_image_path = convert_pdf_page_to_png(pdf_path, page_num, pages_dir)
     if not page_image_path:
         logging.error(f"Error no image! {page_num}")
         return {"content": "", "page_image": "", "page": page_num, "source": pdf_path.name}
     base64_image = encode_image(page_image_path)
 
-    extract_file = str(img_dir / f"page_pypdf_extract_{page_num}.txt")
-    tables_file = str(img_dir / f"page_tables_extract_{page_num}.txt")
-    page_description_file = str(img_dir / f"page_description_{page_num}.txt")
+    extract_file = str(pages_dir / f"page_pypdf_extract_{page_num}.txt")
+    tables_file = str(pages_dir / f"page_tables_extract_{page_num}.txt")
+    page_description_file = str(pages_dir / f"page_description_{page_num}.txt")
 
     page_content = _use_file_or_create(extract_file, lambda: extract_text_from_page(page))
     tables_markdown = _use_file_or_create(tables_file, lambda: "\n\n".join(table.df.to_markdown() for table in tables))
-    page_description = _use_file_or_create(page_description_file, lambda: get_page_description_from_openai(base64_image, page_content, tables_markdown))
+    page_description = _use_file_or_create(page_description_file,
+                                           lambda: get_page_description_from_openai(base64_image, page_content,
+                                                                                    tables_markdown))
 
     logging.info(f"Page data from page {page_num} ready")
     return {
@@ -184,14 +187,35 @@ def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_pat
     }
 
 
-def process_pdf(pdf_path: Path, output_dir: Path) -> List[PageData]:
+def process_pdf(pdf_path: Path, output_dir: Path) -> Path | None:
     try:
         pdf_reader = pypdf.PdfReader(str(pdf_path))
     except Exception as e:
         logging.error(f"Error reading PDF {pdf_path.name}: {e}")
-        return []
+        return None
 
-    img_dir = output_dir / f"{pdf_path.stem}_pages"
-    img_dir.mkdir(exist_ok=True)
+    pages_dir = output_dir / f"{pdf_path.stem}_pages"
+    pages_dir.mkdir(exist_ok=True)
 
-    return [process_pdf_page(page, camelot.read_pdf(str(pdf_path), pages=str(i)),  i, pdf_path, img_dir) for i, page in enumerate(pdf_reader.pages, start=1)]
+    pages = [process_pdf_page(page, camelot.read_pdf(str(pdf_path), pages=str(i)), i, pdf_path, pages_dir) for i, page
+             in enumerate(pdf_reader.pages, start=1)]
+
+    md_file_path = output_dir / f"{pdf_path.stem}.md"
+    with open(md_file_path, "w") as f:
+        for page in pages:
+            f.write(format_content(page))
+    return md_file_path
+
+
+def format_content(item: PageData) -> str:
+    # Strip the markdown code block delimiters
+    content = item['content']
+    if content.startswith("```markdown"):
+        # Removing the markdown code block delimiters
+        content = content.strip("```markdown")
+        parts = content.rsplit("```", 1)
+        content = parts[0].strip() if len(parts) > 1 else content.strip()
+
+    # Add the page number as a Markdown footer
+    page_footer = f"\n\n---\n_Page {item['page']}_\n"
+    return content + page_footer
