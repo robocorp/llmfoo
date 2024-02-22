@@ -1,3 +1,7 @@
 .idea
 dist
-
+.DS_Store
+__pycache__
+output
+.env
+test_tool.tool.json
