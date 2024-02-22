@@ -6,8 +6,8 @@ import pypdf
 from pathlib import Path
 from typing import List, TypedDict, Callable
 import base64
-import requests
 
+from openai import OpenAI
 from camelot.core import TableList
 from dotenv import load_dotenv
 import argparse
@@ -57,7 +57,6 @@ def get_page_description_from_openai(base64_image: str, page_content: str, table
         raise ValueError("No OPENAI_API_KEY in environment variables!")
     print(page_content)
     print("=" * 80)
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
     instruction = f"""
 Convert the text content of this PDF document page into well-structured Markdown format.
 Below is the PyPDF extracted text and potential Camelot extracted tables from the page, followed by screenshot
@@ -91,13 +90,12 @@ Here are the markdown formatted tables from the page extracted with Camelot:
 {tables_markdown}
 ```
 """.strip()
-    payload = {
-        "model": "gpt-4-vision-preview",
-        "messages": [
+    logging.info("Sending request to OpenAI API for page improvement.")
+    llm_client = OpenAI()
+    chat_completion = llm_client.chat.completions.create(
+        messages=[
             {"role": "system", "content": "You are a helpful assistant in document page image to text processing."},
-            {
-                "role": "user",
-                "content": [
+            {"role": "user", "content": [
                     {
                         "type": "text",
                         "text": instruction,
@@ -106,20 +104,12 @@ Here are the markdown formatted tables from the page extracted with Camelot:
                         "type": "image_url",
                         "image_url": {"url": f"data:image/png;base64,{base64_image}", "detail": "high"},
                     },
-                ],
-            }
+                ]}
         ],
-        "max_tokens": 4096,
-    }
-    logging.info("Sending request to OpenAI API for page improvement.")
-    try:
-        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        logging.error(f"API request failed: {e}")
-        raise
-    response_json = response.json()
-    content = response_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+        model="gpt-4-vision-preview",
+        max_tokens=4096,
+    )
+    content = chat_completion.choices[0].message.content
     print(content)
     if not content:
         raise Exception("Received empty content from OpenAI API.")
