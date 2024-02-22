@@ -27,10 +27,34 @@ pip install llmfoo
 * `is_statement_true` should be easy to understand.
 Make some natural language statement, and check it against criteria or general truthfulness. You get back boolean.
 
-For the LLM FOO tool:
+### Converting PDF Documents to Markdown
+
+Newly introduced, `pdf2md` functionality allows for the conversion of PDF documents into Markdown format, making them easier to process and integrate with LLM-based systems. This feature is particularly useful for extracting text and tables from PDFs and transforming them into a more manageable format.
+
+#### Prerequisites
+
+- `pdftocairo` must be installed on your system for converting PDF pages to images.
+
+#### Example Usage
+
+```python
+from llmfoo.pdf2md import process_pdf
+from pathlib import Path
+
+pdf_path = Path("path/to/your/document.pdf")
+output_dir = Path("path/to/output/directory")
+
+# Process the PDF and generate Markdown
+markdown_file = process_pdf(pdf_path, output_dir)
+```
+
+This function will process each page of the PDF, attempting to extract text, figures and tables, and convert them into a Markdown file in the specified output directory.
+
+
+### For the LLM FOO tool:
 
 1. Add `@tool` annotation.
-2. llmfoo will generate the json schema to YOURFILE.tool.json with GPT-4-Turbo - "Never send a machine to do a human's job" .. like who wants to write boilerplate docs for Machines???
+2. llmfoo will generate the json schema to YOURFILE.tool.json with GPT-4-Turbo - "Never send a human to do a machine's job" .. like who wants to write boilerplate docs for Machines???
 3. Annotated functions have helpers:
    - `openai_schema` to return the schema (You can edit it from the json if your not happy with what the machines did)
    - `openai_tool_call` to make the tool call and return the result in chat API message format
