@@ -169,14 +169,14 @@ def extract_text_from_page(page) -> str:
         return ""
 
 
-def _use_file_or_create(filename: str, creator: Callable) -> str:
-    if not os.path.isfile(filename):
+def _use_file_or_create(filename: Path, creator: Callable) -> str:
+    if not filename.exists():
         content = creator()
         with open(filename, "w") as f:
             f.write(content)
-        logging.info(f"File {filename} stored.")
+        logging.info(f"File {filename.name} stored.")
     else:
-        logging.info(f"File {filename} exists, using content from there.")
+        logging.info(f"File {filename.name} exists, using content from there.")
         with open(filename, "r") as f:
             content = f.read()
     return content
@@ -189,9 +189,9 @@ def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_pat
         return {"content": "", "page_image": "", "page": page_num, "source": pdf_path.name}
     base64_image = encode_image(page_image_path)
 
-    extract_file = str(pages_dir / f"page_pypdf_extract_{page_num}.txt")
-    tables_file = str(pages_dir / f"page_tables_extract_{page_num}.txt")
-    page_description_file = str(pages_dir / f"page_description_{page_num}.txt")
+    extract_file = pages_dir / f"page_pypdf_extract_{page_num}.txt"
+    tables_file = pages_dir / f"page_tables_extract_{page_num}.txt"
+    page_description_file = pages_dir / f"page_description_{page_num}.txt"
 
     page_content = _use_file_or_create(extract_file, lambda: extract_text_from_page(page))
     tables_markdown = _use_file_or_create(tables_file, lambda: "\n\n".join(table.df.to_markdown() for table in tables))
