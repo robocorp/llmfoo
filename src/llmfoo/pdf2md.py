@@ -4,7 +4,7 @@ import logging
 import subprocess
 import pypdf
 from pathlib import Path
-from typing import List, TypedDict
+from typing import List, TypedDict, Callable
 import base64
 import requests
 
@@ -130,6 +130,9 @@ Here are the markdown formatted tables from the page extracted with Camelot:
 def convert_pdf_page_to_png(pdf_path: Path, page_num: int, output_dir: Path) -> str:
     output_png_base = f"page_{page_num}"
     output_png_path = output_dir / f"{output_png_base}-{str(page_num).zfill(2)}.png"
+    if output_png_path.exists():
+        logging.info("Page png exists, using it.")
+        return str(output_png_path)
     command = ["pdftocairo", "-png", "-f", str(page_num), "-l", str(page_num), str(pdf_path),
                str(output_dir / output_png_base)]
 
@@ -158,30 +161,35 @@ def extract_text_from_page(page) -> str:
         return ""
 
 
+def _use_file_or_create(filename: str, creator: Callable) -> str:
+    if not os.path.isfile(filename):
+        content = creator()
+        with open(filename, "w") as f:
+            f.write(content)
+        logging.info(f"File {filename} stored.")
+    else:
+        logging.info(f"File {filename} exists, using content from there.")
+        with open(filename, "r") as f:
+            content = f.read()
+    return content
+
+
 def process_pdf_page(page: PageObject, tables: TableList, page_num: int, pdf_path: Path, img_dir: Path) -> PageData:
     page_image_path = convert_pdf_page_to_png(pdf_path, page_num, img_dir)
     if not page_image_path:
         logging.error(f"Error no image! {page_num}")
         return {"content": "", "page_image": "", "page": page_num, "source": pdf_path.name}
-
-    page_content = extract_text_from_page(page)
-
-    with open(str(img_dir / f"page_pypdf_extract_{page_num}.txt"), "w") as f:
-        f.write(page_content)
-
-    tables_markdown = "\n\n".join(table.df.to_markdown() for table in tables)
-
-    with open(str(img_dir / f"page_tables_extract_{page_num}.txt"), "w") as f:
-        f.write(tables_markdown)
-
     base64_image = encode_image(page_image_path)
-    page_description = get_page_description_from_openai(base64_image, page_content, tables_markdown)
 
-    with open(str(img_dir / f"page_description_{page_num}.txt"), "w") as f:
-        f.write(page_description)
+    extract_file = str(img_dir / f"page_pypdf_extract_{page_num}.txt")
+    tables_file = str(img_dir / f"page_tables_extract_{page_num}.txt")
+    page_description_file = str(img_dir / f"page_description_{page_num}.txt")
 
-    logging.info(f"Wrote page data from page {page_num}")
+    page_content = _use_file_or_create(extract_file, lambda: extract_text_from_page(page))
+    tables_markdown = _use_file_or_create(tables_file, lambda: "\n\n".join(table.df.to_markdown() for table in tables))
+    page_description = _use_file_or_create(page_description_file, lambda: get_page_description_from_openai(base64_image, page_content, tables_markdown))
 
+    logging.info(f"Page data from page {page_num} ready")
     return {
         "content": page_description,
         "page_image": page_image_path,
