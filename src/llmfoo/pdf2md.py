@@ -116,10 +116,7 @@ Here are the markdown formatted tables from the page extracted with Camelot:
 
 def convert_pdf_page_to_png(pdf_path: Path, page_num: int, output_dir: Path) -> str:
     output_png_base = f"page_{page_num}"
-    output_png_path = output_dir / f"{output_png_base}-{str(page_num).zfill(2)}.png"
-    if output_png_path.exists():
-        logging.info("Page png exists, using it.")
-        return str(output_png_path)
+    # Preparing the command without assuming the page number format in the output file name.
     command = ["pdftocairo", "-png", "-f", str(page_num), "-l", str(page_num), str(pdf_path),
                str(output_dir / output_png_base)]
 
@@ -130,13 +127,16 @@ def convert_pdf_page_to_png(pdf_path: Path, page_num: int, output_dir: Path) -> 
         logging.error(f"Error converting PDF page to PNG: {e}")
         raise
 
-    # Log the contents of the output directory
-    logging.info(f"Contents of {output_dir}: {[f.name for f in output_dir.iterdir()]}")
+    # Attempt to find the generated PNG file without relying on zfill.
+    # This searches for any file that starts with the base name and ends with .png.
+    potential_files = list(output_dir.glob(f"{output_png_base}-*.png"))
+    if not potential_files:
+        logging.error(f"Expected PNG file not found for page {page_num}")
+        raise FileNotFoundError(f"Expected PNG file not found for page {page_num}")
 
-    if not output_png_path.exists():
-        logging.error(f"Expected PNG file not found: {output_png_path}")
-        raise Exception(f"Expected PNG file not found: {output_png_path}")
-
+    # Assuming pdftocairo generates only one file per page, taking the first match.
+    output_png_path = potential_files[0]
+    logging.info(f"Using generated PNG file: {output_png_path}")
     return str(output_png_path)
 
 
