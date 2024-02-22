@@ -8,7 +8,7 @@ def test_pdf_to_markdown_conversion():
     output_dir = Path(__file__).parent / "data" / "output"
 
     # Run the conversion process
-    process_pdf(pdf_path, output_dir)
+    filename = process_pdf(pdf_path, output_dir)
 
     # Validate the output
     output_md_path = output_dir / (pdf_file.replace(".pdf", ".md"))

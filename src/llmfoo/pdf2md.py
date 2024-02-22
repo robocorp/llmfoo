@@ -10,7 +10,6 @@ import base64
 from openai import OpenAI
 from camelot.core import TableList
 from dotenv import load_dotenv
-import argparse
 import camelot
 from pypdf import PageObject
 
@@ -196,53 +195,3 @@ def process_pdf(pdf_path: Path, output_dir: Path) -> List[PageData]:
     img_dir.mkdir(exist_ok=True)
 
     return [process_pdf_page(page, camelot.read_pdf(str(pdf_path), pages=str(i)),  i, pdf_path, img_dir) for i, page in enumerate(pdf_reader.pages, start=1)]
-
-
-def read_pdf_files(directory: Path, workdir: Path) -> List[PageData]:
-    if not directory.exists() or not directory.is_dir():
-        logging.error(f"Directory {directory} does not exist or is not a directory.")
-        return []
-
-    pdf_files = list(directory.glob("*.pdf"))
-    if not pdf_files:
-        logging.info(f"No PDF files found in {directory}")
-        return []
-
-    setup_workdir(workdir)
-
-    results = []
-    for pdf_file in pdf_files:
-        results.extend(process_pdf(pdf_file, workdir))
-
-    return results
-
-
-def save_to_json(data, file_path):
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description="Process PDF files and convert them to enhanced text using OpenAI's API.")
-    parser.add_argument("pdf_directory", type=str, help="Directory containing PDF files to process")
-    parser.add_argument("output_file", type=str, help="File path to save the processed data")
-    parser.add_argument("--workdir", type=str, default="workdir2", help="Working directory for temporary files")
-    return parser.parse_args()
-
-
-def main():
-    args = parse_arguments()
-    pdf_directory = Path(args.pdf_directory)
-    output_file = args.output_file
-    workdir = Path(args.workdir)
-
-    logging.info(f"Processing PDF files in directory: {pdf_directory}")
-    pdf_data = read_pdf_files(pdf_directory, workdir)
-    logging.info(f"Processed {len(pdf_data)} pages from PDF files.")
-    save_to_json(pdf_data, output_file)
-    logging.info(f"Saved processed data to {output_file}")
-
-
-if __name__ == "__main__":
-    main()
